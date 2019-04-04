@@ -115,6 +115,24 @@ namespace awsiotsdk {
         OpenSSLConnection::OpenSSLConnection(util::String endpoint,
                                              uint16_t endpoint_port,
                                              util::String root_ca_location,
+                                             util::String device_cert_location,
+                                             util::String device_private_key_location,
+                                             std::chrono::milliseconds tls_handshake_timeout,
+                                             std::chrono::milliseconds tls_read_timeout,
+                                             std::chrono::milliseconds tls_write_timeout,
+                                             bool server_verification_flag, 
+                                             bool enable_alpn,
+                                             EVP_PKEY *pkey)
+            : OpenSSLConnection(endpoint, endpoint_port, root_ca_location, device_cert_location,
+                                device_private_key_location, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
+                                server_verification_flag) {
+            enable_alpn_ = enable_alpn;
+            pkey_ = pkey;
+        }
+
+        OpenSSLConnection::OpenSSLConnection(util::String endpoint,
+                                             uint16_t endpoint_port,
+                                             util::String root_ca_location,
                                              std::chrono::milliseconds tls_handshake_timeout,
                                              std::chrono::milliseconds tls_read_timeout,
                                              std::chrono::milliseconds tls_write_timeout,
@@ -331,9 +349,8 @@ namespace awsiotsdk {
                     return ResponseCode::NETWORK_SSL_DEVICE_CRT_PARSE_ERROR;
                 }
                 AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Device privkey : %s", device_private_key_location_.c_str());
-                if (1 != SSL_CTX_use_PrivateKey_file(p_ssl_context_,
-                                                     device_private_key_location_.c_str(),
-                                                     SSL_FILETYPE_PEM)) {
+                if (1 != SSL_CTX_use_PrivateKey(p_ssl_context_,
+                                                     pkey_)) {
                     AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device Private Key Loading error");
                     return ResponseCode::NETWORK_SSL_KEY_PARSE_ERROR;
                 }
@@ -506,16 +523,16 @@ namespace awsiotsdk {
             ResponseCode errorStatus = ResponseCode::SUCCESS;
 
             do {
-                ERR_clear_error();
-                if (nullptr == p_ssl_handle_) {
-                    return ResponseCode::NETWORK_SSL_READ_ERROR;
-                }
-                cur_read_len = SSL_read(p_ssl_handle_, &buf[total_read_length], (int) remaining_bytes_to_read);
-                if (0 < cur_read_len) {
-                    total_read_length += (size_t) cur_read_len;
-                    remaining_bytes_to_read -= cur_read_len;
-                } else {
-                    ssl_retcode = SSL_get_error(p_ssl_handle_, cur_read_len);
+                    ERR_clear_error();
+                    if (nullptr == p_ssl_handle_) {
+                        return ResponseCode::NETWORK_SSL_READ_ERROR;
+                    }
+                    cur_read_len = SSL_read(p_ssl_handle_, &buf[total_read_length], (int) remaining_bytes_to_read);
+                    if (0 < cur_read_len) {
+                        total_read_length += (size_t) cur_read_len;
+                        remaining_bytes_to_read -= cur_read_len;
+                    } else {
+                        ssl_retcode = SSL_get_error(p_ssl_handle_, cur_read_len);
                     switch (ssl_retcode) {
                         case SSL_ERROR_WANT_READ:
                             select_retCode = WaitForSelect(SSL_ERROR_WANT_READ);
