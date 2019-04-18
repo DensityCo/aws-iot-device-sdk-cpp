@@ -60,10 +60,10 @@ namespace awsiotsdk {
         std::atomic_bool OpenSSLConnection::is_lib_initialized(false);
 
         OpenSSLConnection::OpenSSLConnection(util::String endpoint, uint16_t endpoint_port,
-                                             std::chrono::milliseconds tls_handshake_timeout,
-                                             std::chrono::milliseconds tls_read_timeout,
-                                             std::chrono::milliseconds tls_write_timeout,
-                                             bool server_verification_flag) {
+                std::chrono::milliseconds tls_handshake_timeout,
+                std::chrono::milliseconds tls_read_timeout,
+                std::chrono::milliseconds tls_write_timeout,
+                bool server_verification_flag) {
             endpoint_ = endpoint;
             endpoint_port_ = endpoint_port;
             server_verification_flag_ = server_verification_flag;
@@ -83,67 +83,67 @@ namespace awsiotsdk {
         }
 
         OpenSSLConnection::OpenSSLConnection(util::String endpoint,
-                                             uint16_t endpoint_port,
-                                             util::String root_ca_location,
-                                             util::String device_cert_location,
-                                             util::String device_private_key_location,
-                                             std::chrono::milliseconds tls_handshake_timeout,
-                                             std::chrono::milliseconds tls_read_timeout,
-                                             std::chrono::milliseconds tls_write_timeout,
-                                             bool server_verification_flag)
+                uint16_t endpoint_port,
+                util::String root_ca_location,
+                util::String device_cert_location,
+                util::String device_private_key_location,
+                std::chrono::milliseconds tls_handshake_timeout,
+                std::chrono::milliseconds tls_read_timeout,
+                std::chrono::milliseconds tls_write_timeout,
+                bool server_verification_flag)
             : OpenSSLConnection(endpoint, endpoint_port, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
-                                server_verification_flag) {
-            root_ca_location_ = root_ca_location;
-            device_cert_location_ = device_cert_location;
-            device_private_key_location_ = device_private_key_location;
-        }
+                    server_verification_flag) {
+                root_ca_location_ = root_ca_location;
+                device_cert_location_ = device_cert_location;
+                device_private_key_location_ = device_private_key_location;
+            }
 
         OpenSSLConnection::OpenSSLConnection(util::String endpoint,
-                                             uint16_t endpoint_port,
-                                             util::String root_ca_location,
-                                             util::String device_cert_location,
-                                             util::String device_private_key_location,
-                                             std::chrono::milliseconds tls_handshake_timeout,
-                                             std::chrono::milliseconds tls_read_timeout,
-                                             std::chrono::milliseconds tls_write_timeout,
-                                             bool server_verification_flag, bool enable_alpn)
+                uint16_t endpoint_port,
+                util::String root_ca_location,
+                util::String device_cert_location,
+                util::String device_private_key_location,
+                std::chrono::milliseconds tls_handshake_timeout,
+                std::chrono::milliseconds tls_read_timeout,
+                std::chrono::milliseconds tls_write_timeout,
+                bool server_verification_flag, bool enable_alpn)
             : OpenSSLConnection(endpoint, endpoint_port, root_ca_location, device_cert_location,
-                                device_private_key_location, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
-                                server_verification_flag) {
-            enable_alpn_ = enable_alpn;
-        }
+                    device_private_key_location, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
+                    server_verification_flag) {
+                enable_alpn_ = enable_alpn;
+            }
 
         OpenSSLConnection::OpenSSLConnection(util::String endpoint,
-                                             uint16_t endpoint_port,
-                                             util::String root_ca_location,
-                                             util::String device_cert_location,
-                                             util::String device_private_key_location,
-                                             std::chrono::milliseconds tls_handshake_timeout,
-                                             std::chrono::milliseconds tls_read_timeout,
-                                             std::chrono::milliseconds tls_write_timeout,
-                                             bool server_verification_flag, 
-                                             bool enable_alpn,
-                                             EVP_PKEY *pkey)
+                uint16_t endpoint_port,
+                util::String root_ca_location,
+                util::String device_cert_location,
+                util::String device_private_key_location,
+                std::chrono::milliseconds tls_handshake_timeout,
+                std::chrono::milliseconds tls_read_timeout,
+                std::chrono::milliseconds tls_write_timeout,
+                bool server_verification_flag, 
+                bool enable_alpn,
+                EVP_PKEY *pkey)
             : OpenSSLConnection(endpoint, endpoint_port, root_ca_location, device_cert_location,
-                                device_private_key_location, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
-                                server_verification_flag) {
-            enable_alpn_ = enable_alpn;
-            pkey_ = pkey;
-        }
+                    device_private_key_location, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
+                    server_verification_flag) {
+                enable_alpn_ = enable_alpn;
+                pkey_ = pkey;
+            }
 
         OpenSSLConnection::OpenSSLConnection(util::String endpoint,
-                                             uint16_t endpoint_port,
-                                             util::String root_ca_location,
-                                             std::chrono::milliseconds tls_handshake_timeout,
-                                             std::chrono::milliseconds tls_read_timeout,
-                                             std::chrono::milliseconds tls_write_timeout,
-                                             bool server_verification_flag)
+                uint16_t endpoint_port,
+                util::String root_ca_location,
+                std::chrono::milliseconds tls_handshake_timeout,
+                std::chrono::milliseconds tls_read_timeout,
+                std::chrono::milliseconds tls_write_timeout,
+                bool server_verification_flag)
             : OpenSSLConnection(endpoint, endpoint_port, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
-                                server_verification_flag) {
-            root_ca_location_ = root_ca_location;
-            device_cert_location_.clear();
-            device_private_key_location_.clear();
-        }
+                    server_verification_flag) {
+                root_ca_location_ = root_ca_location;
+                device_cert_location_.clear();
+                device_private_key_location_.clear();
+            }
 
         int OpenSSLConnection::WaitForSelect(int error_code) {
             fd_set socketFds;
@@ -363,8 +363,8 @@ namespace awsiotsdk {
                         ret_val = ResponseCode::NETWORK_SSL_CONNECT_TIMEOUT_ERROR;
                     } else if (-1 == select_retCode) { // -1 == SELECT_ERROR
                         AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG,
-                                      " SSL Connect Select error for write %d",
-                                      select_retCode);
+                                " SSL Connect Select error for write %d",
+                                select_retCode);
                         ret_val = ResponseCode::NETWORK_SSL_CONNECT_ERROR;
                     }
                 } else {
@@ -372,7 +372,7 @@ namespace awsiotsdk {
                 }
 
             } while (ResponseCode::NETWORK_SSL_CONNECT_ERROR != ret_val &&
-                ResponseCode::NETWORK_SSL_CONNECT_TIMEOUT_ERROR != ret_val);
+                    ResponseCode::NETWORK_SSL_CONNECT_TIMEOUT_ERROR != ret_val);
 
             return ret_val;
         }
@@ -391,11 +391,24 @@ namespace awsiotsdk {
                     AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device Certificate Loading error");
                     return ResponseCode::NETWORK_SSL_DEVICE_CRT_PARSE_ERROR;
                 }
-                AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Device privkey : %s", device_private_key_location_.c_str());
-                if (1 != SSL_CTX_use_PrivateKey(p_ssl_context_,
-                                                     pkey_)) {
-                    AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device Private Key Loading error");
-                    return ResponseCode::NETWORK_SSL_KEY_PARSE_ERROR;
+
+                if (!pkey_)
+                {
+                    /* if pkey is null, we are reading certs from file */
+                    AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Device privkey : %s", device_private_key_location_.c_str());
+                    if (1 != SSL_CTX_use_PrivateKey_file(p_ssl_context_,
+                                device_private_key_location_.c_str(),
+                                SSL_FILETYPE_PEM)) {
+                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device Private Key Loading error");
+                        return ResponseCode::NETWORK_SSL_KEY_PARSE_ERROR;
+                    }
+                }else{
+                    /* when certs are stored in eeprom */
+                    if (1 != SSL_CTX_use_PrivateKey(p_ssl_context_,
+                                pkey_)) {
+                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device Private Key Loading error");
+                        return ResponseCode::NETWORK_SSL_KEY_PARSE_ERROR;
+                    }
                 }
             }
 
@@ -441,7 +454,7 @@ namespace awsiotsdk {
                         if (nullptr != cert) X509_free(cert);
                     };
                     std::unique_ptr<X509, decltype(cert_destroyer)> cert(SSL_get_peer_certificate(p_ssl_handle_),
-                                                                         cert_destroyer);
+                            cert_destroyer);
                     if (nullptr == cert) {
                         AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " No certificate exchange happened");
                         networkResponse = ResponseCode::NETWORK_SSL_CONNECT_ERROR;
@@ -463,7 +476,7 @@ namespace awsiotsdk {
         ResponseCode OpenSSLConnection::ConnectInternal() {
             ResponseCode networkResponse = ResponseCode::SUCCESS;
             const unsigned char alpn_protocol_list[] = {
-                    14, 'x', '-', 'a', 'm', 'z', 'n', '-', 'm', 'q', 't', 't', '-', 'c', 'a'
+                14, 'x', '-', 'a', 'm', 'z', 'n', '-', 'm', 'q', 't', 't', '-', 'c', 'a'
             };
             const unsigned int alpn_protocol_list_length = sizeof(alpn_protocol_list);
 
@@ -490,7 +503,7 @@ namespace awsiotsdk {
                 // Enable host name check otherwise
                 char dst[INET6_ADDRSTRLEN];
                 if (inet_pton(AF_INET, endpoint_.c_str(), (void *) dst) ||
-                    inet_pton(AF_INET6, endpoint_.c_str(), (void *) dst)) {
+                        inet_pton(AF_INET6, endpoint_.c_str(), (void *) dst)) {
                     X509_VERIFY_PARAM_set1_ip_asc(param, endpoint_.c_str());
                 } else {
                     X509_VERIFY_PARAM_set1_host(param, endpoint_.c_str(), 0);
@@ -552,8 +565,8 @@ namespace awsiotsdk {
                 }
 
             } while (is_connected_ && ResponseCode::NETWORK_SSL_WRITE_ERROR != rc &&
-                ResponseCode::NETWORK_SSL_WRITE_TIMEOUT_ERROR != rc &&
-                total_written_length < bytes_to_write);
+                    ResponseCode::NETWORK_SSL_WRITE_TIMEOUT_ERROR != rc &&
+                    total_written_length < bytes_to_write);
 
             if (ResponseCode::SUCCESS == rc) {
                 size_written_bytes_out = total_written_length;
@@ -563,7 +576,7 @@ namespace awsiotsdk {
         }
 
         ResponseCode OpenSSLConnection::ReadInternal(util::Vector<unsigned char> &buf, size_t buf_read_offset,
-                                                     size_t size_bytes_to_read, size_t &size_read_bytes_out) {
+                size_t size_bytes_to_read, size_t &size_read_bytes_out) {
             int ssl_retcode;
             int select_retCode;
             size_t total_read_length = buf_read_offset;
@@ -572,16 +585,16 @@ namespace awsiotsdk {
             ResponseCode errorStatus = ResponseCode::SUCCESS;
 
             do {
-                    ERR_clear_error();
-                    if (nullptr == p_ssl_handle_) {
-                        return ResponseCode::NETWORK_SSL_READ_ERROR;
-                    }
-                    cur_read_len = SSL_read(p_ssl_handle_, &buf[total_read_length], (int) remaining_bytes_to_read);
-                    if (0 < cur_read_len) {
-                        total_read_length += (size_t) cur_read_len;
-                        remaining_bytes_to_read -= cur_read_len;
-                    } else {
-                        ssl_retcode = SSL_get_error(p_ssl_handle_, cur_read_len);
+                ERR_clear_error();
+                if (nullptr == p_ssl_handle_) {
+                    return ResponseCode::NETWORK_SSL_READ_ERROR;
+                }
+                cur_read_len = SSL_read(p_ssl_handle_, &buf[total_read_length], (int) remaining_bytes_to_read);
+                if (0 < cur_read_len) {
+                    total_read_length += (size_t) cur_read_len;
+                    remaining_bytes_to_read -= cur_read_len;
+                } else {
+                    ssl_retcode = SSL_get_error(p_ssl_handle_, cur_read_len);
                     switch (ssl_retcode) {
                         case SSL_ERROR_WANT_READ:
                             select_retCode = WaitForSelect(SSL_ERROR_WANT_READ);
@@ -602,8 +615,8 @@ namespace awsiotsdk {
                     }
                 }
                 if (ResponseCode::NETWORK_SSL_NOTHING_TO_READ == errorStatus ||
-                    ResponseCode::NETWORK_SSL_READ_ERROR == errorStatus ||
-                    ResponseCode::NETWORK_SSL_CONNECTION_CLOSED_ERROR == errorStatus) {
+                        ResponseCode::NETWORK_SSL_READ_ERROR == errorStatus ||
+                        ResponseCode::NETWORK_SSL_CONNECTION_CLOSED_ERROR == errorStatus) {
                     break;
                 }
             } while (is_connected_ && total_read_length < size_bytes_to_read);

@@ -88,7 +88,7 @@ namespace awsiotsdk {
             util::String root_ca_location_;             ///< Pointer to string containing the filename (including path) of the root CA file.
             util::String device_cert_location_;         ///< Pointer to string containing the filename (including path) of the device certificate.
             util::String device_private_key_location_;  ///< Pointer to string containing the filename (including path) of the device private key file.
-            EVP_PKEY *pkey_;                            ///< Pointer to device private key.
+            EVP_PKEY *pkey_ = nullptr;                  ///< Pointer to device private key.
             bool server_verification_flag_;             ///< Boolean.  True = perform server certificate hostname validation.  False = skip validation \b NOT recommended.
             std::atomic_bool is_connected_;             ///< Boolean indicating connection status
             struct timeval tls_handshake_timeout_;      ///< Timeout for TLS handshake command
