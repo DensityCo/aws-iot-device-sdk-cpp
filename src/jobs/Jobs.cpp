@@ -236,14 +236,14 @@ namespace awsiotsdk {
 
     util::String Jobs::SerializeDescribeJobExecutionPayload(int64_t executionNumber,    // set to 0 to ignore
                                                             bool includeJobDocument) {
-        util::String result = "{\"includeJobDocument\":\"";
+        util::String result = "{\"includeJobDocument\":";
         result += (includeJobDocument ? "true" : "false");
-        result += "\"";
+        result += "";
         if (executionNumber > 0) {
             result += ",\"executionNumber\":\"" + std::to_string(executionNumber) + "\"";
         }
         if (!client_token_.empty()) {
-            result += "\"clientToken\":\"" + client_token_ + "\"";
+            result += ",\"clientToken\":\"" + client_token_ + "\"";
         }
         result += '}';
 
@@ -303,6 +303,7 @@ namespace awsiotsdk {
         uint16_t packet_id = 0;
         std::unique_ptr<Utf8String> jobTopic = GetJobTopic(JOB_DESCRIBE_TOPIC, JOB_REQUEST_TYPE, jobId);
 
+        std::cerr << "Internal topic: " << jobTopic->ToStdString() << std::endl;
         if (jobTopic == nullptr) {
             return ResponseCode::JOBS_INVALID_TOPIC_ERROR;
         }
