@@ -89,6 +89,7 @@ namespace awsiotsdk {
             util::String device_cert_location_;         ///< Pointer to string containing the filename (including path) of the device certificate.
             util::String device_private_key_location_;  ///< Pointer to string containing the filename (including path) of the device private key file.
             EVP_PKEY *pkey_ = nullptr;                  ///< Pointer to device private key.
+
             bool server_verification_flag_;             ///< Boolean.  True = perform server certificate hostname validation.  False = skip validation \b NOT recommended.
             std::atomic_bool is_connected_;             ///< Boolean indicating connection status
             struct timeval tls_handshake_timeout_;      ///< Timeout for TLS handshake command
@@ -246,7 +247,8 @@ namespace awsiotsdk {
                               std::chrono::milliseconds tls_handshake_timeout,
                               std::chrono::milliseconds tls_read_timeout, std::chrono::milliseconds tls_write_timeout,
                               bool server_verification_flag, bool enable_alpn, EVP_PKEY *pkey);
-            /**
+
+	    /**
              * @brief Initialize the OpenSSL object
              *
              * Initializes the OpenSSL object

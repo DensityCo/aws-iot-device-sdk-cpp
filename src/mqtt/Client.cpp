@@ -181,6 +181,7 @@ namespace awsiotsdk {
             return ResponseCode::MQTT_TOO_MANY_SUBSCRIPTIONS_IN_REQUEST;
         }
 
+
         std::shared_ptr<mqtt::SubscribePacket>
             p_subscribe_packet = std::make_shared<mqtt::SubscribePacket>(subscription_list);
         return p_client_core_->PerformAction(ActionType::SUBSCRIBE, p_subscribe_packet, action_response_timeout);
