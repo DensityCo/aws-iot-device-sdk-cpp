@@ -96,6 +96,7 @@ namespace awsiotsdk {
             root_ca_location_ = root_ca_location;
             device_cert_location_ = device_cert_location;
             device_private_key_location_ = device_private_key_location;
+            pkey_ = nullptr;
         }
 
         OpenSSLConnection::OpenSSLConnection(util::String endpoint,
@@ -393,7 +394,15 @@ namespace awsiotsdk {
                     return ResponseCode::NETWORK_SSL_DEVICE_CRT_PARSE_ERROR;
                 }
 
-                if(0 < device_private_key_location_.length())
+
+                if(pkey_ != nullptr)
+                {
+                    if(1 != SSL_CTX_use_PrivateKey(p_ssl_context_, pkey_)) {
+                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device Binary Private Key Loading error");
+                        return ResponseCode::NETWORK_SSL_KEY_PARSE_ERROR;
+                    }
+                }
+                else if(0 < device_private_key_location_.length())
                 {
                     AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Device privkey : %s", device_private_key_location_.c_str());
                     std::cerr << "Loading privkey file: " << device_private_key_location_ << std::endl;
@@ -405,14 +414,6 @@ namespace awsiotsdk {
                         ERR_print_errors_fp (stderr);
                         AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device File Private Key Loading error");
                                             return ResponseCode::NETWORK_SSL_KEY_PARSE_ERROR;
-                    }
-                }
-                else if(pkey_ != nullptr)
-                {
-                    if(1 != SSL_CTX_use_PrivateKey(p_ssl_context_,
-                                                     pkey_)) {
-                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device Binary Private Key Loading error");
-                        return ResponseCode::NETWORK_SSL_KEY_PARSE_ERROR;
                     }
                 }
                 else
