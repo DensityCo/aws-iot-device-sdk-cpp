@@ -343,6 +343,9 @@ namespace awsiotsdk {
             case ResponseCode::DISCOVER_RESPONSE_UNEXPECTED_JSON_STRUCTURE_ERROR:
                 os << awsiotsdk::ResponseHelper::DISCOVER_RESPONSE_UNEXPECTED_JSON_STRUCTURE_ERROR_STRING;
                 break;
+            case ResponseCode::NETWORK_PROXY_CONNECT_ERROR:
+                os << awsiotsdk::ResponseHelper::NETWORK_PROXY_CONNECT_FAILED_STRING;
+                break;
             case ResponseCode::JOBS_INVALID_TOPIC_ERROR:
                 os << awsiotsdk::ResponseHelper::JOBS_INVALID_TOPIC_ERROR_STRING;
                 break;

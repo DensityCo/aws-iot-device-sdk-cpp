@@ -112,6 +112,12 @@ namespace awsiotsdk {
             std::mutex clean_shutdown_action_lock_;
             std::condition_variable shutdown_timeout_condition_;
 
+            // HTTP proxy
+            util::String proxy_;
+            uint16_t proxy_port_;
+            util::String proxy_endpoint_;
+            uint16_t proxy_endpoint_port_;
+
             /**
              * @brief Wait for socket FDs to become ready for read or write operations
              *
@@ -137,6 +143,15 @@ namespace awsiotsdk {
              * @return ResponseCode - successful connection or TCP error
              */
             ResponseCode ConnectTCPSocket();
+
+            /**
+             * @brief Create an HTTP proxy connection
+             *
+             * Creates connection to HTTP proxy
+             *
+             * @return ResponseCode - successful connection or Proxy error
+             */
+            ResponseCode ConnectProxy();
 
             /**
              * @brief Attempt connection
@@ -207,7 +222,8 @@ namespace awsiotsdk {
                               std::chrono::milliseconds tls_handshake_timeout,
                               std::chrono::milliseconds tls_read_timeout,
                               std::chrono::milliseconds tls_write_timeout,
-                              bool server_verification_flag);
+                              bool server_verification_flag,
+                              util::String proxy = "", uint16_t proxy_port = 0);
 
             /**
              * @brief Constructor for the OpenSSL TLS implementation
@@ -223,32 +239,35 @@ namespace awsiotsdk {
              * @param std::chrono::milliseconds tls_read_timeout - The value to use for timeout of read operation
              * @param std::chrono::milliseconds tls_write_timeout - The value to use for timeout of write operation
              * @param bool server_verification_flag - used to decide whether server verification is needed or not
+             * @param util::String proxy - proxy server FQDN
+             * @param uint16_t proxy_port - proxy server port number
              *
              */
             OpenSSLConnection(util::String endpoint, uint16_t endpoint_port, util::String root_ca_location,
                               util::String device_cert_location, util::String device_private_key_location,
                               std::chrono::milliseconds tls_handshake_timeout,
                               std::chrono::milliseconds tls_read_timeout, std::chrono::milliseconds tls_write_timeout,
-                              bool server_verification_flag);
+                              bool server_verification_flag, util::String proxy = "", uint16_t proxy_port = 0);
 
             OpenSSLConnection(util::String endpoint, uint16_t endpoint_port, util::String root_ca_location,
                               std::chrono::milliseconds tls_handshake_timeout,
                               std::chrono::milliseconds tls_read_timeout, std::chrono::milliseconds tls_write_timeout,
-                              bool server_verification_flag);
-
-            OpenSSLConnection(util::String endpoint, uint16_t endpoint_port, util::String root_ca_location,
-                              util::String device_cert_location, util::String device_private_key_location,
-                              std::chrono::milliseconds tls_handshake_timeout,
-                              std::chrono::milliseconds tls_read_timeout, std::chrono::milliseconds tls_write_timeout,
-                              bool server_verification_flag, bool enable_alpn);
+                              bool server_verification_flag, util::String proxy = "", uint16_t proxy_port = 0);
 
             OpenSSLConnection(util::String endpoint, uint16_t endpoint_port, util::String root_ca_location,
                               util::String device_cert_location, util::String device_private_key_location,
                               std::chrono::milliseconds tls_handshake_timeout,
                               std::chrono::milliseconds tls_read_timeout, std::chrono::milliseconds tls_write_timeout,
-                              bool server_verification_flag, bool enable_alpn, EVP_PKEY *pkey);
+                              bool server_verification_flag, bool enable_alpn, util::String proxy = "", uint16_t proxy_port = 0);
 
-	    /**
+            OpenSSLConnection(util::String endpoint, uint16_t endpoint_port, util::String root_ca_location,
+                              util::String device_cert_location, util::String device_private_key_location,
+                              std::chrono::milliseconds tls_handshake_timeout,
+                              std::chrono::milliseconds tls_read_timeout, std::chrono::milliseconds tls_write_timeout,
+                              bool server_verification_flag, bool enable_alpn,
+                              EVP_PKEY *pkey, util::String proxy = "", uint16_t proxy_port = 0);
+
+	        /**
              * @brief Initialize the OpenSSL object
              *
              * Initializes the OpenSSL object

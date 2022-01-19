@@ -35,6 +35,7 @@
 #include <resolv.h>
 #define MAX_PATH_LENGTH_ PATH_MAX
 #endif
+#include <inttypes.h>
 
 #define OPENSSL_WRAPPER_LOG_TAG "[OpenSSL Wrapper]"
 
@@ -63,10 +64,14 @@ namespace awsiotsdk {
                                              std::chrono::milliseconds tls_handshake_timeout,
                                              std::chrono::milliseconds tls_read_timeout,
                                              std::chrono::milliseconds tls_write_timeout,
-                                             bool server_verification_flag) {
+                                             bool server_verification_flag,
+                                             util::String proxy,
+                                             uint16_t proxy_port) {
             endpoint_ = endpoint;
             endpoint_port_ = endpoint_port;
             server_verification_flag_ = server_verification_flag;
+            proxy_ = proxy;
+            proxy_port_ = proxy_port;
             int timeout_ms = static_cast<int>(tls_handshake_timeout.count());
             tls_handshake_timeout_ = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
             timeout_ms = static_cast<int>(tls_read_timeout.count());
@@ -90,9 +95,11 @@ namespace awsiotsdk {
                                              std::chrono::milliseconds tls_handshake_timeout,
                                              std::chrono::milliseconds tls_read_timeout,
                                              std::chrono::milliseconds tls_write_timeout,
-                                             bool server_verification_flag)
+                                             bool server_verification_flag,
+                                             util::String proxy,
+                                             uint16_t proxy_port)
             : OpenSSLConnection(endpoint, endpoint_port, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
-                                server_verification_flag) {
+                                server_verification_flag, proxy, proxy_port) {
             root_ca_location_ = root_ca_location;
             device_cert_location_ = device_cert_location;
             device_private_key_location_ = device_private_key_location;
@@ -107,10 +114,13 @@ namespace awsiotsdk {
                                              std::chrono::milliseconds tls_handshake_timeout,
                                              std::chrono::milliseconds tls_read_timeout,
                                              std::chrono::milliseconds tls_write_timeout,
-                                             bool server_verification_flag, bool enable_alpn)
+                                             bool server_verification_flag,
+                                             bool enable_alpn,
+                                             util::String proxy,
+                                             uint16_t proxy_port)
             : OpenSSLConnection(endpoint, endpoint_port, root_ca_location, device_cert_location,
                                 device_private_key_location, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
-                                server_verification_flag) {
+                                server_verification_flag, proxy, proxy_port) {
             enable_alpn_ = enable_alpn;
         }
 
@@ -122,12 +132,14 @@ namespace awsiotsdk {
                                              std::chrono::milliseconds tls_handshake_timeout,
                                              std::chrono::milliseconds tls_read_timeout,
                                              std::chrono::milliseconds tls_write_timeout,
-                                             bool server_verification_flag, 
+                                             bool server_verification_flag,
                                              bool enable_alpn,
-                                             EVP_PKEY *pkey)
+                                             EVP_PKEY *pkey, 
+                                             util::String proxy,
+                                             uint16_t proxy_port)
             : OpenSSLConnection(endpoint, endpoint_port, root_ca_location, device_cert_location,
                                 device_private_key_location, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
-                                server_verification_flag) {
+                                server_verification_flag, proxy, proxy_port) {
             enable_alpn_ = enable_alpn;
             pkey_ = pkey;
         }
@@ -138,9 +150,11 @@ namespace awsiotsdk {
                                              std::chrono::milliseconds tls_handshake_timeout,
                                              std::chrono::milliseconds tls_read_timeout,
                                              std::chrono::milliseconds tls_write_timeout,
-                                             bool server_verification_flag)
+                                             bool server_verification_flag, 
+                                             util::String proxy,
+                                             uint16_t proxy_port)
             : OpenSSLConnection(endpoint, endpoint_port, tls_handshake_timeout, tls_read_timeout, tls_write_timeout,
-                                server_verification_flag) {
+                                server_verification_flag, proxy, proxy_port) {
             root_ca_location_ = root_ca_location;
             device_cert_location_.clear();
             device_private_key_location_.clear();
@@ -332,6 +346,63 @@ namespace awsiotsdk {
             return ret_val;
         }
 
+        ResponseCode OpenSSLConnection::ConnectProxy() {
+            static constexpr int BUFSIZZ = 1024*8;
+            ResponseCode rc = ResponseCode::NETWORK_PROXY_CONNECT_ERROR;
+
+            AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Connected to proxy, start HTTP CONNECT");
+
+            BIO *sbio = BIO_new(BIO_s_socket());
+            BIO *fbio = BIO_new(BIO_f_buffer());
+
+            BIO_set_fd(sbio, server_tcp_socket_fd_, 0);
+            BIO_push(fbio, sbio);
+            BIO_printf(fbio, "CONNECT %s:%" PRIu16 " HTTP/1.0\r\n", proxy_endpoint_.c_str(), proxy_endpoint_port_);
+            BIO_printf(fbio, "Host: %s:%" PRIu16 "\r\n", proxy_endpoint_.c_str(), proxy_endpoint_port_);
+            BIO_printf(fbio, "Proxy-Connection: Keep-Alive\r\n\r\n");
+            BIO_flush(fbio);
+
+            /*
+             * The first line is the HTTP response.  According to RFC 7230,
+             * it's formatted exactly like this:
+             *
+             * HTTP/d.d ddd Reason text\r\n
+             */
+            util::Vector<char> response_buf(BUFSIZZ);
+            int response_buf_len = BIO_gets(fbio, &response_buf[0], BUFSIZZ);
+
+            util::String response{response_buf.begin(), response_buf.end()};
+
+            AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "%s", response.c_str());
+
+            if (response_buf_len < std::string("HTTP/1.1 200").length()) {
+                AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG,
+                              "HTTP CONNECT failed, insufficient response from proxy (got %d octets)", response_buf_len);
+            } else if (response[8] != ' ') {
+                AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG,
+                              "HTTP CONNECT failed, incorrect response from proxy");
+            } else if (response.substr(9,3) != "200") {
+                AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG,
+                              "HTTP CONNECT failed, expected '200' got '%s'", response.substr(9,3).c_str());
+            } else {
+                rc = ResponseCode::SUCCESS;
+            }
+
+            /* Read past all following headers */
+            do {
+                response_buf_len = BIO_gets(fbio, &response_buf[0], BUFSIZZ);
+                util::String header{response_buf.begin(), response_buf.end()};
+                AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "%s", header.c_str());
+            } while (response_buf_len > 2);
+
+            BIO_flush(fbio);
+            BIO_pop(fbio);
+            BIO_free(fbio);
+            BIO_free(sbio);
+
+            return rc;
+        }
+
         ResponseCode OpenSSLConnection::AttemptConnect() {
             ResponseCode ret_val = ResponseCode::FAILURE;
             int rc = 0;
@@ -438,6 +509,16 @@ namespace awsiotsdk {
                 return ResponseCode::NETWORK_TCP_SETUP_ERROR;
             }
 
+            // If set, connect to proxy
+            if (!proxy_.empty() && proxy_port_ != 0) {
+                proxy_endpoint_ = endpoint_;
+                proxy_endpoint_port_ = endpoint_port_;
+
+                // Temporarily change endpoint settings
+                endpoint_ = proxy_;
+                endpoint_port_ = proxy_port_;
+            }
+
             networkResponse = ConnectTCPSocket();
             if (ResponseCode::SUCCESS != networkResponse) {
                 AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "TCP Connection error");
@@ -449,6 +530,20 @@ namespace awsiotsdk {
                 return networkResponse;
             }
 
+            if (!proxy_.empty() && proxy_port_ != 0) {
+                // Restore endpoint settings
+                endpoint_ = proxy_endpoint_;
+                endpoint_port_ = proxy_endpoint_port_;
+
+                networkResponse = ConnectProxy();
+                if (ResponseCode::SUCCESS != networkResponse) {
+                    return networkResponse;
+                }
+            }
+            //
+            // Is it cool to use the socket to connect to proxy before setting it to non-blocking?
+            //
+
             SSL_set_fd(p_ssl_handle_, server_tcp_socket_fd_);
 
             networkResponse = SetSocketToNonBlocking();
@@ -456,20 +551,22 @@ namespace awsiotsdk {
                 AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Unable to set the socket to Non-Blocking");
             } else {
                 networkResponse = AttemptConnect();
-                if (X509_V_OK != SSL_get_verify_result(p_ssl_handle_)) {
-                    std::cerr << "Server certificate verification failed" << std::endl;
-                    AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Server Certificate Verification failed.");
-                    networkResponse = ResponseCode::NETWORK_SSL_CONNECT_ERROR;
-                } else {
-                    // ensure you have a valid certificate returned, otherwise no certificate exchange happened
-                    auto cert_destroyer = [](X509 *cert) {
-                        if (nullptr != cert) X509_free(cert);
-                    };
-                    std::unique_ptr<X509, decltype(cert_destroyer)> cert(SSL_get_peer_certificate(p_ssl_handle_),
-                                                                         cert_destroyer);
-                    if (nullptr == cert) {
-                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " No certificate exchange happened");
+                if (ResponseCode::SUCCESS == networkResponse) {
+                    if (X509_V_OK != SSL_get_verify_result(p_ssl_handle_)) {
+                        std::cerr << "Server certificate verification failed" << std::endl;
+                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Server Certificate Verification failed.");
                         networkResponse = ResponseCode::NETWORK_SSL_CONNECT_ERROR;
+                    } else {
+                        // ensure you have a valid certificate returned, otherwise no certificate exchange happened
+                        auto cert_destroyer = [](X509 *cert) {
+                            if (nullptr != cert) X509_free(cert);
+                        };
+                        std::unique_ptr<X509, decltype(cert_destroyer)> cert(SSL_get_peer_certificate(p_ssl_handle_),
+                                                                            cert_destroyer);
+                        if (nullptr == cert) {
+                            AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " No certificate exchange happened");
+                            networkResponse = ResponseCode::NETWORK_SSL_CONNECT_ERROR;
+                        }
                     }
                 }
             }

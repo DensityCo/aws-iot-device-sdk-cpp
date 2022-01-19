@@ -101,9 +101,11 @@ namespace awsiotsdk {
                                                  std::chrono::milliseconds tls_handshake_timeout,
                                                  std::chrono::milliseconds tls_read_timeout,
                                                  std::chrono::milliseconds tls_write_timeout,
-                                                 bool server_verification_flag)
+                                                 bool server_verification_flag,
+                                                 util::String proxy,
+                                                 uint16_t proxy_port)
             : openssl_connection_(endpoint, endpoint_port, root_ca_location, tls_handshake_timeout, tls_read_timeout,
-                                  tls_write_timeout, server_verification_flag) {
+                                  tls_write_timeout, server_verification_flag, proxy, proxy_port) {
             custom_authorizer_name_.clear();
             custom_authorizer_signature_.clear();
             custom_authorizer_token_name_.clear();
@@ -142,9 +144,11 @@ namespace awsiotsdk {
                                                  std::chrono::milliseconds tls_write_timeout,
                                                  util::String custom_authorizer_name, util::String custom_authorizer_signature,
                                                  util::String custom_authorizer_token_name, util::String custom_authorizer_token,
-                                                 bool server_verification_flag)
+                                                 bool server_verification_flag,
+                                                 util::String proxy,
+                                                 uint16_t proxy_port)
             : WebSocketConnection(endpoint, endpoint_port, root_ca_location, "", "", "", "", tls_handshake_timeout, tls_read_timeout,
-                                  tls_write_timeout, false) {
+                                  tls_write_timeout, false, proxy, proxy_port) {
             custom_authorizer_name_ = custom_authorizer_name;
             custom_authorizer_signature_ = custom_authorizer_signature;
             custom_authorizer_token_name_ = custom_authorizer_token_name;
