@@ -207,6 +207,8 @@ namespace awsiotsdk {
              * @param std::chrono::milliseconds tls_read_timeout - The value to use for timeout of read operation
              * @param std::chrono::milliseconds tls_write_timeout - The value to use for timeout of write operation
              * @param bool server_verification_flag - used to decide whether server verification is needed or not
+             * @param util::String proxy - proxy FQDN
+             * @param uint16_t proxy_port - proxy port
              *
              */
             WebSocketConnection(util::String endpoint, uint16_t endpoint_port, util::String root_ca_location,
@@ -214,7 +216,9 @@ namespace awsiotsdk {
                                 util::String aws_secret_access_key, util::String aws_session_token,
                                 std::chrono::milliseconds tls_handshake_timeout,
                                 std::chrono::milliseconds tls_read_timeout, std::chrono::milliseconds tls_write_timeout,
-                                bool server_verification_flag);
+                                bool server_verification_flag,
+                                util::String proxy = "",
+                                uint16_t proxy_port = 0);
 
             /**
              * @brief Constructor for the WebSocket for MQTT implementation using custom authentication
@@ -232,6 +236,8 @@ namespace awsiotsdk {
              * @param util::String custom_authorizer_token_name - Authorizer token name
              * @param util::String custom_authorizer_token - Authorizer token
              * @param bool server_verification_flag - used to decide whether server verification is needed or not
+             * @param util::String proxy - proxy FQDN
+             * @param uint16_t proxy_port - proxy port
              *
              */
             WebSocketConnection(util::String endpoint, uint16_t endpoint_port, util::String root_ca_location,
@@ -239,7 +245,9 @@ namespace awsiotsdk {
                                 std::chrono::milliseconds tls_read_timeout, std::chrono::milliseconds tls_write_timeout,
                                 util::String custom_authorizer_name, util::String custom_authorizer_signature,
                                 util::String custom_authorizer_token_name, util::String custom_authorizer_token,
-                                bool server_verification_flag);
+                                bool server_verification_flag,
+                                util::String proxy = "",
+                                uint16_t proxy_port = 0);
 
             /**
              * @brief Check if WebSocket layer is still connected

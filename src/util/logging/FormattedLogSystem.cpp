@@ -21,6 +21,7 @@
 
 #include "util/logging/FormattedLogSystem.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <cstdarg>
@@ -41,8 +42,12 @@ static util::String CreateLogPrefixLine(LogLevel logLevel, const char *tag, cons
     std::time_t time_now = std::chrono::duration_cast<std::chrono::seconds>(now_ms).count();
 
     char *time = std::ctime(&time_now);
-    if (nullptr != time) {
-        ss << time << ":" << now_ms.count() % 1000 << " ";
+    util::String time_str(time);
+
+    if (!time_str.empty()) {
+        // Remove default new line from end of time string
+        std::replace(time_str.begin(), time_str.end(), '\n', '\0');
+        ss << time_str << ":" << now_ms.count() % 1000 << " ";
     }
     ss << tag << " [" << std::this_thread::get_id() << "] ";
     if (line && function) {
