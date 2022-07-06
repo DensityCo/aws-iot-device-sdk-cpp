@@ -59,12 +59,12 @@ else()
 endif()
 
 # Download and include rapidjson, not optional
-configure_file(CMakeLists-rapidjson.txt.in ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download)
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download)
-target_include_directories(${SDK_TARGET_NAME} PRIVATE ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/src/include)
+#configure_file(CMakeLists-rapidjson.txt.in ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download/CMakeLists.txt)
+#execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+#    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download)
+#execute_process(COMMAND ${CMAKE_COMMAND} --build .
+#    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download)
+#target_include_directories(${SDK_TARGET_NAME} PRIVATE ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/src/include)
 
 # Download sanitizers, optional
 if (SANITIZE_THREAD OR SANITIZE_ADDRESS OR SANITIZE_MEMORY OR SANITIZE_UNDEFINED)
@@ -182,7 +182,7 @@ set(ignoreMe "${BUILD_DOC}${BUILD_DOCS}${BUILD_EXAMPLE}${BUILD_EXAMPLES}${BUILD_
 #########################
 set(NETWORK_WRAPPER_DEST_TARGET ${SDK_TARGET_NAME})
 include(${PROJECT_SOURCE_DIR}/network/CMakeLists.txt.in)
-install(DIRECTORY network/OpenSSL DESTINATION include/network/OpenSSL FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY network/OpenSSL DESTINATION include/network FILES_MATCHING PATTERN "*.hpp")
 
 ##################################
 # Section: Define Install Target #
