@@ -17,7 +17,6 @@ endif()
 ########################################
 # Section : Common SDK Build setttings #
 ########################################
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Set required compiler standard to standard c++11. Disable extensions.
@@ -174,6 +173,13 @@ if(BUILD_SAMPLES)
 	add_subdirectory(samples/StoryRobotArm EXCLUDE_FROM_ALL)
 	add_subdirectory(samples/StorySwitch EXCLUDE_FROM_ALL)
 endif()
+
+#########################
+# Add Network libraries #
+#########################
+set(NETWORK_WRAPPER_DEST_TARGET ${SDK_TARGET_NAME})
+include(${PROJECT_SOURCE_DIR}/network/CMakeLists.txt.in)
+install(DIRECTORY network/OpenSSL DESTINATION include/network/OpenSSL FILES_MATCHING PATTERN "*.hpp")
 
 ##################################
 # Section: Define Install Target #
