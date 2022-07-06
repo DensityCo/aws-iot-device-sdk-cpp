@@ -174,6 +174,9 @@ if(BUILD_SAMPLES)
 	add_subdirectory(samples/StorySwitch EXCLUDE_FROM_ALL)
 endif()
 
+# Suppress Buildroot warning message for unused manually-specified variables
+set(ignoreMe "${BUILD_DOC}${BUILD_DOCS}${BUILD_EXAMPLE}${BUILD_EXAMPLES}${BUILD_TEST}${BUILD_TESTING}${BUILD_TESTS}")
+
 #########################
 # Add Network libraries #
 #########################
