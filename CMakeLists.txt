@@ -59,12 +59,14 @@ else()
 endif()
 
 # Download and include rapidjson, not optional
-#configure_file(CMakeLists-rapidjson.txt.in ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download/CMakeLists.txt)
-#execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-#    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download)
-#execute_process(COMMAND ${CMAKE_COMMAND} --build .
-#    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download)
-#target_include_directories(${SDK_TARGET_NAME} PRIVATE ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/src/include)
+if(RAPID_JSON)
+	configure_file(CMakeLists-rapidjson.txt.in ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download/CMakeLists.txt)
+	execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download)
+	execute_process(COMMAND ${CMAKE_COMMAND} --build .
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/download)
+	target_include_directories(${SDK_TARGET_NAME} PRIVATE ${CMAKE_BINARY_DIR}/${DEPENDENCY_DIR}/rapidjson/src/include)
+endif()
 
 # Download sanitizers, optional
 if (SANITIZE_THREAD OR SANITIZE_ADDRESS OR SANITIZE_MEMORY OR SANITIZE_UNDEFINED)
@@ -83,7 +85,7 @@ target_sources(${SDK_TARGET_NAME} PRIVATE ${SDK_SOURCES})
 # Configure Threading library
 find_package(Threads REQUIRED)
 set(THREAD_LIBRARY_LINK_STRING "Threads::Threads" -ldl)
-target_link_libraries(${SDK_TARGET_NAME} "Threads::Threads" -ldl)
+target_link_libraries(${SDK_TARGET_NAME} PUBLIC "Threads::Threads" -ldl)
 
 if(APPLE)
 	target_link_libraries(${SDK_TARGET_NAME} -lresolv)
