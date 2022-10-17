@@ -301,7 +301,7 @@ namespace awsiotsdk {
 
                 char straddr[INET6_ADDRSTRLEN];
                 inet_ntop(address_family_, addressPointer, straddr, sizeof(straddr));
-                AWS_LOG_INFO(OPENSSL_WRAPPER_LOG_TAG, "resolved %s to %s", endpoint_.c_str(), straddr);
+                AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "resolved %s to %s", endpoint_.c_str(), straddr);
 
                 connect_status = connect(server_tcp_socket_fd_, sock_addr, socketLength);
 

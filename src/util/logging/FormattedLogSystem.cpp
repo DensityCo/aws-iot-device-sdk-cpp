@@ -29,6 +29,9 @@
 #include <stdio.h>
 #include <thread>
 
+#include <iomanip>
+#include <iostream>
+
 using namespace awsiotsdk;
 using namespace awsiotsdk::util::Logging;
 
@@ -41,14 +44,10 @@ static util::String CreateLogPrefixLine(LogLevel logLevel, const char *tag, cons
     std::chrono::milliseconds now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
     std::time_t time_now = std::chrono::duration_cast<std::chrono::seconds>(now_ms).count();
 
-    char *time = std::ctime(&time_now);
-    util::String time_str(time);
+    std::tm tm = *std::localtime(&time_now);
 
-    if (!time_str.empty()) {
-        // Remove default new line from end of time string
-        std::replace(time_str.begin(), time_str.end(), '\n', '\0');
-        ss << time_str << ":" << now_ms.count() % 1000 << " ";
-    }
+    ss << std::put_time(&tm, "%c") << ":" << now_ms.count() % 1000 << " ";
+
     ss << tag << " [" << std::this_thread::get_id() << "] ";
     if (line && function) {
         ss << "[" << function << ":L"<< line << "] : ";
