@@ -475,8 +475,7 @@ namespace awsiotsdk {
                 }
                 else if(0 < device_private_key_location_.length())
                 {
-                    AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Device privkey : %s", device_private_key_location_.c_str());
-                    std::cerr << "Loading privkey file: " << device_private_key_location_ << std::endl;
+                    AWS_LOG_INFO(OPENSSL_WRAPPER_LOG_TAG, "Device privkey : %s", device_private_key_location_.c_str());
                     unsigned long error = 1;
                     if(1 != (error = SSL_CTX_use_PrivateKey_file(p_ssl_context_,
                                                         device_private_key_location_.c_str(),
@@ -553,7 +552,6 @@ namespace awsiotsdk {
                 networkResponse = AttemptConnect();
                 if (ResponseCode::SUCCESS == networkResponse) {
                     if (X509_V_OK != SSL_get_verify_result(p_ssl_handle_)) {
-                        std::cerr << "Server certificate verification failed" << std::endl;
                         AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Server Certificate Verification failed.");
                         networkResponse = ResponseCode::NETWORK_SSL_CONNECT_ERROR;
                     } else {
@@ -620,7 +618,7 @@ namespace awsiotsdk {
             }
 
             if (enable_alpn_) {
-                std::cerr << "ALPN Enabled" << std::endl;
+                AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, " ALPN Enabled");
                 if (0 != SSL_set_alpn_protos(p_ssl_handle_, alpn_protocol_list, alpn_protocol_list_length)) {
                     AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " SSL INIT Failed - Unable to set ALPN options");
                     return ResponseCode::NETWORK_SSL_INIT_ERROR;
