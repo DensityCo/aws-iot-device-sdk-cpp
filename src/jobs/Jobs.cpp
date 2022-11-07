@@ -35,6 +35,8 @@
 #define REJECTED_REPLY "rejected"
 #define WILDCARD_REPLY "#"
 
+#define JOBS_LOG_TAG "[Jobs]"
+
 namespace awsiotsdk {
     std::unique_ptr<Jobs> Jobs::Create(std::shared_ptr<MqttClient> p_mqtt_client,
                                        mqtt::QoS qos,
@@ -303,7 +305,7 @@ namespace awsiotsdk {
         uint16_t packet_id = 0;
         std::unique_ptr<Utf8String> jobTopic = GetJobTopic(JOB_DESCRIBE_TOPIC, JOB_REQUEST_TYPE, jobId);
 
-        std::cerr << "Internal topic: " << jobTopic->ToStdString() << std::endl;
+        AWS_LOG_DEBUG(JOBS_LOG_TAG,"Internal topic: %s", jobTopic->ToStdString().c_str());
         if (jobTopic == nullptr) {
             return ResponseCode::JOBS_INVALID_TOPIC_ERROR;
         }
