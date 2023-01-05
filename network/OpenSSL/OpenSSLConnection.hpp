@@ -113,10 +113,10 @@ namespace awsiotsdk {
             std::condition_variable shutdown_timeout_condition_;
 
             // HTTP proxy
-            util::String proxy_;
-            uint16_t proxy_port_;
-            util::String proxy_endpoint_;
-            uint16_t proxy_endpoint_port_;
+            util::String proxy_{};
+            uint16_t proxy_port_{0};
+            util::String proxy_endpoint_{};
+            uint16_t proxy_endpoint_port_{0};
 
             /**
              * @brief Wait for socket FDs to become ready for read or write operations
