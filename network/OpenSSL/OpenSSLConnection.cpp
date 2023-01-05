@@ -222,7 +222,7 @@ namespace awsiotsdk {
 #endif
 
             if ((p_ssl_context_ = SSL_CTX_new(method)) == NULL) {
-                AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " SSL INIT Failed - Unable to create SSL Context");
+                AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "SSL INIT Failed - Unable to create SSL Context");
                 return ResponseCode::NETWORK_SSL_INIT_ERROR;
             }
 
@@ -274,7 +274,11 @@ namespace awsiotsdk {
             int error = getaddrinfo(endpoint_char, nullptr, &hints, &result_add);
             if ((error != 0) || (result_add == nullptr)) {
                 // found no ip address for the server
-                AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "Error resolving hostname: %i", error);
+                if (error == EAI_SYSTEM) {
+                    AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "Error resolving hostname: %s\n", strerror(errno));
+                } else {
+                    AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "Error resolving hostname: %s\n", gai_strerror(error));
+                }
                 return ResponseCode::NETWORK_TCP_UNKNOWN_HOST;
             }
 
@@ -349,15 +353,18 @@ namespace awsiotsdk {
             static constexpr int BUFSIZZ = 1024*8;
             ResponseCode rc = ResponseCode::NETWORK_PROXY_CONNECT_ERROR;
 
-            AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Connected to proxy, start HTTP CONNECT");
+            AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Sending HTTP CONNECT");
 
             BIO *sbio = BIO_new(BIO_s_socket());
             BIO *fbio = BIO_new(BIO_f_buffer());
 
             BIO_set_fd(sbio, server_tcp_socket_fd_, 0);
             BIO_push(fbio, sbio);
+            AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "CONNECT %s:%" PRIu16 " HTTP/1.0\n", proxy_endpoint_.c_str(), proxy_endpoint_port_);
             BIO_printf(fbio, "CONNECT %s:%" PRIu16 " HTTP/1.0\r\n", proxy_endpoint_.c_str(), proxy_endpoint_port_);
+            AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Host: %s:%" PRIu16 "\n", proxy_endpoint_.c_str(), proxy_endpoint_port_);
             BIO_printf(fbio, "Host: %s:%" PRIu16 "\r\n", proxy_endpoint_.c_str(), proxy_endpoint_port_);
+            AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Proxy-Connection: Keep-Alive\n");
             BIO_printf(fbio, "Proxy-Connection: Keep-Alive\r\n\r\n");
             BIO_flush(fbio);
 
@@ -422,20 +429,20 @@ namespace awsiotsdk {
                 if (SSL_ERROR_WANT_READ == errorCode) {
                     select_retCode = WaitForSelect(errorCode);
                     if (0 == select_retCode) { // 0 == SELECT_TIMEOUT
-                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " SSL Connect time out while waiting for read");
+                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "SSL Connect time out while waiting for read");
                         ret_val = ResponseCode::NETWORK_SSL_CONNECT_TIMEOUT_ERROR;
                     } else if (-1 == select_retCode) { // -1 == SELECT_ERROR
-                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " SSL Connect Select error for read %d", select_retCode);
+                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "SSL Connect Select error for read %d", select_retCode);
                         ret_val = ResponseCode::NETWORK_SSL_CONNECT_ERROR;
                     }
                 } else if (SSL_ERROR_WANT_WRITE == errorCode) {
                     select_retCode = WaitForSelect(errorCode);
                     if (0 == select_retCode) { // 0 == SELECT_TIMEOUT
-                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " SSL Connect time out while waiting for write");
+                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "SSL Connect time out while waiting for write");
                         ret_val = ResponseCode::NETWORK_SSL_CONNECT_TIMEOUT_ERROR;
                     } else if (-1 == select_retCode) { // -1 == SELECT_ERROR
                         AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG,
-                                      " SSL Connect Select error for write %d",
+                                      "SSL Connect Select error for write %d",
                                       select_retCode);
                         ret_val = ResponseCode::NETWORK_SSL_CONNECT_ERROR;
                     }
@@ -452,7 +459,7 @@ namespace awsiotsdk {
         ResponseCode OpenSSLConnection::LoadCerts() {
             AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Root CA : %s", root_ca_location_.c_str());
             if (!SSL_CTX_load_verify_locations(p_ssl_context_, root_ca_location_.c_str(), NULL)) {
-                AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Root CA Loading error");
+                AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "Root CA Loading error");
                 return ResponseCode::NETWORK_SSL_ROOT_CRT_PARSE_ERROR;
             }
 
@@ -460,7 +467,7 @@ namespace awsiotsdk {
             if (0 < device_cert_location_.length()) {
                 AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Device crt : %s", device_cert_location_.c_str());
                 if (!SSL_CTX_use_certificate_chain_file(p_ssl_context_, device_cert_location_.c_str())) {
-                    AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device Certificate Loading error");
+                    AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "Device Certificate Loading error");
                     return ResponseCode::NETWORK_SSL_DEVICE_CRT_PARSE_ERROR;
                 }
 
@@ -468,7 +475,7 @@ namespace awsiotsdk {
                 if(pkey_ != nullptr)
                 {
                     if(1 != SSL_CTX_use_PrivateKey(p_ssl_context_, pkey_)) {
-                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device Binary Private Key Loading error");
+                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "Device Binary Private Key Loading error");
                         return ResponseCode::NETWORK_SSL_KEY_PARSE_ERROR;
                     }
                 }
@@ -481,13 +488,13 @@ namespace awsiotsdk {
                                                         SSL_FILETYPE_PEM)))
                     {
                         ERR_print_errors_fp (stderr);
-                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Device File Private Key Loading error");
+                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "Device File Private Key Loading error");
                                             return ResponseCode::NETWORK_SSL_KEY_PARSE_ERROR;
                     }
                 }
                 else
                 {
-                    AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " No private key provided");
+                    AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "No private key provided");
                     return ResponseCode::NETWORK_SSL_KEY_PARSE_ERROR;
                 }
             }
@@ -515,6 +522,8 @@ namespace awsiotsdk {
                 // Temporarily change endpoint settings
                 endpoint_ = proxy_;
                 endpoint_port_ = proxy_port_;
+
+                AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Connecting to proxy %s:%" PRIu16, endpoint_.c_str(), endpoint_port_);
             }
 
             networkResponse = ConnectTCPSocket();
@@ -532,6 +541,8 @@ namespace awsiotsdk {
                 // Restore endpoint settings
                 endpoint_ = proxy_endpoint_;
                 endpoint_port_ = proxy_endpoint_port_;
+                AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Connecting to %s:%" PRIu16 " through proxy",
+                              proxy_endpoint_.c_str(), proxy_endpoint_port_);
 
                 networkResponse = ConnectProxy();
                 if (ResponseCode::SUCCESS != networkResponse) {
@@ -546,12 +557,12 @@ namespace awsiotsdk {
 
             networkResponse = SetSocketToNonBlocking();
             if (ResponseCode::SUCCESS != networkResponse) {
-                AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Unable to set the socket to Non-Blocking");
+                AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "Unable to set the socket to Non-Blocking");
             } else {
                 networkResponse = AttemptConnect();
                 if (ResponseCode::SUCCESS == networkResponse) {
                     if (X509_V_OK != SSL_get_verify_result(p_ssl_handle_)) {
-                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " Server Certificate Verification failed.");
+                        AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "Server Certificate Verification failed.");
                         networkResponse = ResponseCode::NETWORK_SSL_CONNECT_ERROR;
                     } else {
                         // ensure you have a valid certificate returned, otherwise no certificate exchange happened
@@ -561,7 +572,7 @@ namespace awsiotsdk {
                         std::unique_ptr<X509, decltype(cert_destroyer)> cert(SSL_get_peer_certificate(p_ssl_handle_),
                                                                             cert_destroyer);
                         if (nullptr == cert) {
-                            AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " No certificate exchange happened");
+                            AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "No certificate exchange happened");
                             networkResponse = ResponseCode::NETWORK_SSL_CONNECT_ERROR;
                         }
                     }
@@ -617,16 +628,18 @@ namespace awsiotsdk {
             }
 
             if (enable_alpn_) {
-                AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, " ALPN Enabled");
+                AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "ALPN Enabled");
                 if (0 != SSL_set_alpn_protos(p_ssl_handle_, alpn_protocol_list, alpn_protocol_list_length)) {
-                    AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, " SSL INIT Failed - Unable to set ALPN options");
+                    AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "SSL INIT Failed - Unable to set ALPN options");
                     return ResponseCode::NETWORK_SSL_INIT_ERROR;
                 }
             }
 
+            AWS_LOG_INFO(OPENSSL_WRAPPER_LOG_TAG, "Attempting IPv6 connection");
             networkResponse = PerformSSLConnect();
             if (ResponseCode::SUCCESS != networkResponse && address_family_ == AF_INET6) {
                 // IPv6 connection unsucessful retry with IPv4
+                AWS_LOG_INFO(OPENSSL_WRAPPER_LOG_TAG, "Attempting IPv4 connection");
                 address_family_ = AF_INET;
                 networkResponse = PerformSSLConnect();
             }
