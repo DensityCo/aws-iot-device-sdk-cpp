@@ -505,6 +505,7 @@ namespace awsiotsdk {
 
         ResponseCode OpenSSLConnection::PerformSSLConnect() {
             ResponseCode networkResponse = ResponseCode::SUCCESS;
+            bool use_proxy = (!proxy_.empty() && proxy_port_ != 0);
 
             // Configure a non-zero callback if desired
             SSL_set_verify(p_ssl_handle_, SSL_VERIFY_PEER, nullptr);
@@ -514,8 +515,7 @@ namespace awsiotsdk {
                 return ResponseCode::NETWORK_TCP_SETUP_ERROR;
             }
 
-            // If set, connect to proxy
-            if (!proxy_.empty() && proxy_port_ != 0) {
+            if (use_proxy) {
                 proxy_endpoint_ = endpoint_;
                 proxy_endpoint_port_ = endpoint_port_;
 
@@ -527,6 +527,13 @@ namespace awsiotsdk {
             }
 
             networkResponse = ConnectTCPSocket();
+
+            if (use_proxy) {
+                // Restore endpoint settings
+                endpoint_ = proxy_endpoint_;
+                endpoint_port_ = proxy_endpoint_port_;
+            }
+
             if (ResponseCode::SUCCESS != networkResponse) {
                 AWS_LOG_ERROR(OPENSSL_WRAPPER_LOG_TAG, "TCP Connection error");
 #ifdef WIN32
@@ -537,10 +544,7 @@ namespace awsiotsdk {
                 return networkResponse;
             }
 
-            if (!proxy_.empty() && proxy_port_ != 0) {
-                // Restore endpoint settings
-                endpoint_ = proxy_endpoint_;
-                endpoint_port_ = proxy_endpoint_port_;
+            if (use_proxy) {
                 AWS_LOG_DEBUG(OPENSSL_WRAPPER_LOG_TAG, "Connecting to %s:%" PRIu16 " through proxy",
                               proxy_endpoint_.c_str(), proxy_endpoint_port_);
 
